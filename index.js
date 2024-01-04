@@ -12,6 +12,10 @@ app.use(cors());
 app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
 
+app.get("/",(req,res)=>{
+  res.send("Welcome to the Nyka Dashboard")
+})
+
 app.listen(process.env.PORT, async () => {
   try {
     await connection;
