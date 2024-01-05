@@ -6,7 +6,7 @@ const { UserModel } = require("../model/user.model");
 const userRouter = Router();
 
 userRouter.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, avatar } = req.body;
   try {
     if (!name || !email || !password) {
       res
@@ -27,8 +27,38 @@ userRouter.post("/register", async (req, res) => {
       name,
       email: newEmail,
       password: hashedPass,
+      avatar,
       created_at: new Date(),
+      updated_at:new Date()
     });
+/*
+ {
+    name: {
+      type: String,
+      required: true,
+      maxlength: 50,
+    },
+    avatar: {
+      type: String,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    created_at: {
+      type: Date,
+    },
+    updated_at: {
+      type: Date,
+    },
+  },
+*/
+
     res
       .status(201)
       .json(`New user:${newUser} and for this email ${newEmail} is created`);
@@ -39,27 +69,33 @@ userRouter.post("/register", async (req, res) => {
   }
 });
 
-userRouter.post("/login", async (req, res) => {
+userRouter.post("/login", async(req, res)=>{
+  const {email, password}= req.body;
   try {
-    const { email, password } = req.body;
-    const user = await UserModel.findOne({ email });
-    if (!user) {
-      res.status(401).json({ error: "User not found" });
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      res.status(401).json({ error: "Invalid credentials" });
-    }
-    const { _id: id, name } = user;
-    const token = jwt.sign({ id, name }, "masai");
-    res
-      .status(200)
-      .json({ message: "Login successful", token: token, ID: id, NAME: name });
+      const user= await User_Model.findOne({email})
+      if(!user){
+          res.status(400).send({msg:"User Not found"})
+      }
+      if(user){
+          bcrypt.compare(password, user.password, async(err, result)=> {
+              // result == true
+              if(err){
+                  return res.status(400).send({error:"bcrypt compare error",err})
+              }
+              if(result){
+                  res.status(200).send({msg:"Login Successful",
+                  "token":jwt.sign({ userId:user._id,username:user.username }, process.env.JWT_KEY)
+              })
+              }
+          });
+      }
+      else{
+          return res.status(400).send({error:"Wrong Credentials"})
+      }
   } catch (error) {
-    res
-      .status(401)
-      .json({ error: error.message, err: "this is the catch error" });
+      return res.status(400).send({error:error.message})
   }
-});
+})
+
 
 module.exports = { userRouter };
