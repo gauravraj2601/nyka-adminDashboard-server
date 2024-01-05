@@ -38,6 +38,9 @@ productRouter.get("/", async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    if (page < 1 || limit < 1) {
+      return res.status(400).json({ error: "Invalid page or limit value" });
+    }
     // Filter by Gender and Category
     const genderFilter = req.query.gender ? { gender: req.query.gender } : {};
     const categoryFilter = req.query.category ? { category: req.query.category } : {};
@@ -97,17 +100,25 @@ productRouter.get("/:id", async (req, res) => {
   }
 });
 
-// patch request to update the data
+// patch request to update the data  , updated_at:new Date 
 productRouter.patch("/:id", async (req, res) => {
   const { id } = req.params;
+  console.log(id)
   try {
-    const product = await ProductModel.findByIdAndUpdate(id);
-    if (!product) {
+    const { name, price, description,picture, gender,category } = req.body;
+    // const updatedProduct = await ProductModel.findById(id)
+    const updatedProduct = await ProductModel.findByIdAndUpdate(
+      id,
+      { name, price, description, picture, gender,category},
+      { new: true }
+    );
+    if (!updatedProduct) {
       res.status(204).json({ error: "no products found" });
     } else {
+      console.log("Updated")
       res
-        .status(204)
-        .send({ product, message: "product updated successfully" });
+        .status(200)
+        .send({ updatedProduct, message: "product updated successfully" });
     }
   } catch (error) {
     res
